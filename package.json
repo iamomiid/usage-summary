@@ -22,6 +22,12 @@
       "title": "Codex Usage",
       "description": "View Codex 5h and weekly rate limits for multiple accounts",
       "mode": "view"
+    },
+    {
+      "name": "codex-menu-bar",
+      "title": "Codex Status",
+      "description": "Show Codex usage in the menu bar",
+      "mode": "menu-bar"
     }
   ],
   "preferences": [
