@@ -1,0 +1,73 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "usage-summary",
+  "title": "Usage Summary",
+  "description": "Track API usage and rate limits for OpenRouter and Codex",
+  "icon": "command-icon.png",
+  "author": "iamomiid",
+  "categories": [
+    "Productivity",
+    "Developer Tools"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "openrouter-summary",
+      "title": "OpenRouter Usage",
+      "description": "View OpenRouter credits, totals, and model activity",
+      "mode": "view"
+    },
+    {
+      "name": "codex-usage",
+      "title": "Codex Usage",
+      "description": "View Codex 5h and weekly rate limits for multiple accounts",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "openrouterApiKey",
+      "title": "OpenRouter API Key",
+      "description": "Your OpenRouter management API key",
+      "type": "password",
+      "required": true,
+      "label": "API Key"
+    },
+    {
+      "name": "codexAuthPaths",
+      "title": "Codex Auth Paths",
+      "description": "Comma or newline-separated paths to Codex auth.json files or directories containing them",
+      "type": "textfield",
+      "required": false,
+      "label": "Auth Paths"
+    },
+    {
+      "name": "showPredictedRunoutTime",
+      "title": "Show Predicted Runout",
+      "description": "Show when the current usage trend would hit 100% for each Codex window",
+      "type": "checkbox",
+      "required": false,
+      "label": "Show Runout"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.64.0",
+    "@raycast/utils": "^1.10.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.6",
+    "@types/node": "20.8.10",
+    "@types/react": "18.2.27",
+    "eslint": "^8.51.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}
