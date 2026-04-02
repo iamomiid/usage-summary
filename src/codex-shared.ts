@@ -1,12 +1,82 @@
-import { getPreferenceValues } from "@raycast/api";
-import { CodexAccountUsage, fetchCodexUsage, getCodexAuthPaths, loadCodexCredentials } from "./codex-api";
+import { Cache, getPreferenceValues } from "@raycast/api";
+import {
+  CodexAccountUsage,
+  fetchCodexUsage,
+  getCodexAuthPaths,
+  loadCodexCredentials,
+} from "./codex-api";
 
 interface Preferences {
   showPredictedRunoutTime?: boolean;
 }
 
+const CODEX_CACHE_KEY = "codex-usage-cache:v1";
+const CODEX_CACHE_TTL_MS = 60 * 1000;
+const codexCache = new Cache({ namespace: "usage-summary-codex" });
+
+interface CodexUsageCacheEntry {
+  savedAt: number;
+  pathsKey: string;
+  accounts: CodexAccountUsage[];
+}
+
 export function getCodexPreferences() {
   return getPreferenceValues<Preferences>();
+}
+
+function buildPathsKey(paths: string[]) {
+  return paths.join("|");
+}
+
+export function getCodexCacheKey() {
+  return buildPathsKey(getCodexAuthPaths());
+}
+
+export function getCachedCodexAccounts() {
+  const pathsKey = getCodexCacheKey();
+  const raw = codexCache.get(CODEX_CACHE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const entry = JSON.parse(raw) as CodexUsageCacheEntry;
+    if (entry.pathsKey !== pathsKey) {
+      return null;
+    }
+
+    return entry.accounts;
+  } catch {
+    return null;
+  }
+}
+
+async function readCodexCache(pathsKey: string) {
+  const raw = codexCache.get(CODEX_CACHE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const entry = JSON.parse(raw) as CodexUsageCacheEntry;
+    if (entry.pathsKey !== pathsKey) {
+      return null;
+    }
+
+    return entry.accounts;
+  } catch {
+    return null;
+  }
+}
+
+async function writeCodexCache(pathsKey: string, accounts: CodexAccountUsage[]) {
+  const entry: CodexUsageCacheEntry = {
+    savedAt: Date.now(),
+    pathsKey,
+    accounts,
+  };
+
+  codexCache.set(CODEX_CACHE_KEY, JSON.stringify(entry));
 }
 
 export function formatResetTime(resetAt: number) {
@@ -98,13 +168,29 @@ export function getPredictedRunout(window?: {
   };
 }
 
-export async function loadCodexAccounts(): Promise<CodexAccountUsage[]> {
+export async function loadCodexAccounts(
+  forceRefresh = false,
+): Promise<CodexAccountUsage[]> {
   const paths = getCodexAuthPaths();
   if (paths.length === 0) {
     return [];
   }
 
-  return Promise.all(
+  const pathsKey = buildPathsKey(paths);
+  const cachedAccounts = await readCodexCache(pathsKey);
+  const cachedEntryRaw = codexCache.get(CODEX_CACHE_KEY);
+  if (!forceRefresh && cachedAccounts && cachedEntryRaw) {
+    try {
+      const cachedEntry = JSON.parse(cachedEntryRaw) as CodexUsageCacheEntry;
+      if (Date.now() - cachedEntry.savedAt <= CODEX_CACHE_TTL_MS) {
+        return cachedAccounts;
+      }
+    } catch {
+      // fall through and refresh
+    }
+  }
+
+  const accounts = await Promise.all(
     paths.map(async (sourcePath) => {
       const credentials = loadCodexCredentials(sourcePath);
       if ("error" in credentials) {
@@ -139,4 +225,7 @@ export async function loadCodexAccounts(): Promise<CodexAccountUsage[]> {
       }
     }),
   );
+
+  await writeCodexCache(pathsKey, accounts);
+  return accounts;
 }

@@ -2,6 +2,7 @@ import { List, showToast, Toast } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { CodexAccountUsage } from "./codex-api";
 import {
+  getCachedCodexAccounts,
   getCodexPreferences,
   getPredictedRunout,
   getProgressBar,
@@ -11,8 +12,11 @@ import {
 
 export default function CodexUsage() {
   const { showPredictedRunoutTime } = getCodexPreferences();
-  const [accounts, setAccounts] = useState<CodexAccountUsage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialAccounts = getCachedCodexAccounts();
+  const [accounts, setAccounts] = useState<CodexAccountUsage[]>(
+    initialAccounts ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(!initialAccounts);
 
   useEffect(() => {
     async function loadAccounts() {

@@ -1,6 +1,7 @@
 import { Color, Icon, MenuBarExtra, showToast, Toast } from "@raycast/api";
 import { useEffect, useState } from "react";
 import {
+  getCachedCodexAccounts,
   formatResetTime,
   getCodexPreferences,
   getPredictedRunout,
@@ -12,8 +13,11 @@ import { CodexAccountUsage } from "./codex-api";
 
 export default function CodexMenuBar() {
   const { showPredictedRunoutTime } = getCodexPreferences();
-  const [accounts, setAccounts] = useState<CodexAccountUsage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialAccounts = getCachedCodexAccounts();
+  const [accounts, setAccounts] = useState<CodexAccountUsage[]>(
+    initialAccounts ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(!initialAccounts);
 
   useEffect(() => {
     async function load() {
@@ -41,7 +45,9 @@ export default function CodexMenuBar() {
       icon={{ source: Icon.Terminal, tintColor: Color.PrimaryText }}
       tooltip="Codex Usage"
     >
-      {isLoading ? <MenuBarExtra.Item title="Loading..." /> : null}
+      {isLoading ? (
+        <MenuBarExtra.Item title="Refreshing Codex cache..." />
+      ) : null}
       {!isLoading && accounts.length === 0 ? (
         <MenuBarExtra.Item title="No Codex accounts found" />
       ) : null}
